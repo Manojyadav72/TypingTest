@@ -3,7 +3,6 @@ const timeEl = document.getElementById("time");
 const wpmEl = document.getElementById("wpm");
 const accuracyEl = document.getElementById("accuracy");
 const restartBtn = document.getElementById("restartBtn");
-const themeBtn = document.getElementById("themeBtn");
 const timeSelect = document.getElementById("timeSelect");
 
 // Popup elements
@@ -15,20 +14,51 @@ const resultErrors = document.getElementById("resultErrors");
 const closePopup = document.getElementById("closePopup");
 
 const passages = [
-  "Typing is a skill you build with practice and patience.",
-  "Discipline beats motivation when learning new skills.",
-  "The quick brown fox jumps over the lazy dog.",
-  "JavaScript lets you add interactivity to web pages.",
-  "Consistency is the key to improving your typing speed."
+  "the morning air feels fresh and pure as the sun slowly rises above the fields children walk to school with bright eyes and happy thoughts eager to learn and grow farmers work in the soil with care planting seeds that will feed many people birds sing together while the cool breeze moves gently across the trees",
+
+  "workers travel to offices with determination and energy to complete their goals the afternoon brings warmth and effort as tasks continue with steady focus evening arrives softly with families meeting and sharing food laughter and stories the night sky spreads calm silence filled with stars guiding everyone toward rest and hope",
+
+  "life is a journey where each day brings lessons and chances to become stronger the rising sun paints the sky with light and fills hearts with courage and faith children learn from books and teachers while also discovering joy through play and friendship",
+
+  "farmers grow crops with hard work giving food and life to the people of towns workers and traders build progress in cities where energy and movement never stop the afternoon heat reminds everyone of patience and the value of steady action for every hopeful soul tomorrow",
+
+  "nature shows its beauty through shining rivers tall trees and endless skies full of wonder morning arrives with golden rays that spread across fields homes and hearts with joy children play laugh and learn while their minds grow strong with knowledge and curiosity farmers and workers give effort and time so that life continues with balance and growth",
+
+  "the afternoon hours are filled with strength determination and the desire to achieve goals as the sun sets the colors of the sky remind everyone of peace and calm families unite in love sharing food and stories that strengthen bonds and trust the night falls softly bringing rest silence and the light of stars guiding tomorrow"
 ];
 
-let text = "";
+let passageWords = [];
+let currentChunk = 0;
+const chunkSize = 26; 
+
 let idx = 0, started = false, timer, timeLeft, errors = 0, typed = 0;
 
-// load new passage
+
 function loadText() {
-  text = passages[Math.floor(Math.random() * passages.length)];
+  const passage = passages[Math.floor(Math.random() * passages.length)];
+  passageWords = passage.split(" ");
+  currentChunk = 0;
+  idx = 0;
+  errors = 0;
+  typed = 0;
+  started = false;
+  clearInterval(timer);
+  timeLeft = parseInt(timeSelect.value);
+
+  timeEl.textContent = timeLeft;
+  wpmEl.textContent = "0";
+  accuracyEl.textContent = "100";
+
+  loadChunk();
+}
+
+function loadChunk() {
   targetEl.innerHTML = "";
+  const chunkWords = passageWords.slice(
+    currentChunk * chunkSize,
+    (currentChunk + 1) * chunkSize
+  );
+  const text = chunkWords.join(" ");
   text.split("").forEach((ch, i) => {
     const span = document.createElement("span");
     span.textContent = ch;
@@ -37,14 +67,6 @@ function loadText() {
     targetEl.appendChild(span);
   });
   idx = 0;
-  errors = 0;
-  typed = 0;
-  started = false;
-  clearInterval(timer);
-  timeLeft = parseInt(timeSelect.value);
-  timeEl.textContent = timeLeft;
-  wpmEl.textContent = "0";
-  accuracyEl.textContent = "100";
 }
 
 // timer
@@ -80,22 +102,30 @@ document.addEventListener("keydown", (e) => {
 
   const spans = targetEl.children;
 
-  if (e.key.length === 1) { // character keys
+  if (e.key.length === 1) {
     typed++;
-    const expected = text[idx];
+    const expected = spans[idx].textContent;
     if (e.key === expected) {
       spans[idx].classList.remove("active", "incorrect");
       spans[idx].classList.add("correct");
     } else {
       spans[idx].classList.remove("active");
-      spans[idx].classList.add("incorrect"); // mark red
+      spans[idx].classList.add("incorrect");
       errors++;
     }
 
-    // Move forward no matter what
-    spans[idx].classList.remove("active");
     idx++;
-    if (idx < spans.length) spans[idx].classList.add("active");
+    if (idx < spans.length) {
+      spans[idx].classList.add("active");
+    } else {
+      currentChunk++;
+      if (currentChunk * chunkSize < passageWords.length) {
+        loadChunk();
+      } else {
+        clearInterval(timer);
+        showResults();
+      }
+    }
   } else if (e.key === "Backspace" && idx > 0) {
     spans[idx].classList.remove("active");
     idx--;
@@ -105,14 +135,9 @@ document.addEventListener("keydown", (e) => {
   }
 
   updateStats();
-
-  if (idx >= text.length) {
-    clearInterval(timer);
-    showResults();
-  }
 });
 
-// Show results popup
+
 function showResults() {
   resultTime.textContent = parseInt(timeSelect.value);
   resultWpm.textContent = wpmEl.textContent;
@@ -121,27 +146,13 @@ function showResults() {
   resultPopup.style.display = "flex";
 }
 
-// Restart
 restartBtn.addEventListener("click", () => {
   loadText();
   resultPopup.style.display = "none";
 });
 
-// Close popup
 closePopup.addEventListener("click", () => {
   resultPopup.style.display = "none";
 });
-
-// Theme toggle
-themeBtn.addEventListener("click", () => {
-  document.body.classList.toggle("light");
-  themeBtn.textContent = document.body.classList.contains("light")
-    ? "Dark Mode"
-    : "Light Mode";
-});
-
-// Reload text on time change
 timeSelect.addEventListener("change", loadText);
-
-// Initial load
 loadText();
