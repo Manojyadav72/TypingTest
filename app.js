@@ -1,3 +1,4 @@
+
 const targetEl = document.getElementById("text");
 const timeEl = document.getElementById("time");
 const wpmEl = document.getElementById("wpm");
@@ -29,7 +30,7 @@ const passages = [
 
 let passageWords = [];
 let currentChunk = 0;
-const chunkSize = 26; 
+const chunkSize = 25; 
 
 let idx = 0, started = false, timer, timeLeft, errors = 0, typed = 0;
 
